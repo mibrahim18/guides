@@ -1,64 +1,49 @@
-const { CosmosClient } = require("@azure/cosmos"); // Importing the CosmosClient to interact with Azure Cosmos DB
-const winston = require("winston"); // Importing Winston for logging
+npm install @azure/cosmos
 
-// Retrieve Cosmos DB endpoint and key from environment variables
+
+const { CosmosClient } = require("@azure/cosmos"); 
+
 const endpoint = process.env.COSMOS_ENDPOINT;
 const key = process.env.COSMOS_KEY;
 
-// Check if environment variables are correctly set
 if (!endpoint || !key) {
   throw new Error("COSMOS_ENDPOINT or COSMOS_KEY is not set correctly in the environment variables.");
 }
 
-// Initialize CosmosClient with endpoint and key
 const client = new CosmosClient({ endpoint, key });
-const databaseName = "counter"; // Name of the database
-const containerName = "Visitors"; // Name of the container (collection)
+const databaseName = "Counter";
+const containerName = "Visitors";
 
-// Configure Winston logger to log messages in JSON format to the console
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.json(),
-  transports: [new winston.transports.Console()],
-});
-
-// Export the main function as an Azure Function
 module.exports = async function (context, req) {
-  logger.info("JavaScript HTTP trigger function processed a request.");
+  context.log("JavaScript HTTP trigger function processed a request.");
 
   const documentId = "1"; // Define the document ID for visitor count
   try {
-    // Read the current visitor count from Cosmos DB
     const { resource: item } = await client
       .database(databaseName)
       .container(containerName)
       .item(documentId, documentId)
       .read();
-    const currentCount = item.count || 0; // Get current count or default to 0 if not set
+    const currentCount = item.count || 0;
 
-    // Increment the visitor count
     item.count = currentCount + 1;
 
-    // Update the count in Cosmos DB using upsert (insert or update)
     await client
       .database(databaseName)
       .container(containerName)
       .items.upsert(item);
 
-    // Log the updated visitor count
-    logger.info(`Visitor count updated from ${currentCount} to ${item.count}`);
+    context.log(`Visitor count updated from ${currentCount} to ${item.count}`);
 
-    // Set the HTTP response with the updated count
     context.res = {
-      status: 200, // HTTP status code for success
-      body: `Visitor count updated to: ${item.count}`, // Response message
+      status: 200,
+      body: `Visitor count updated to: ${item.count}`,
     };
   } catch (error) {
-    // Log any errors that occur during the process
-    logger.error(`Error updating visitor count: ${error.message}`);
+    context.log(`Error updating visitor count: ${error.message}`);
     context.res = {
-      status: 500, // HTTP status code for server error
-      body: "An error occurred while updating the visitor count.", // Error message
+      status: 500,
+      body: "An error occurred while updating the visitor count.",
     };
   }
 };
