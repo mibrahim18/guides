@@ -1,3 +1,6 @@
+env:
+            AZURE_FUNCTION_API_KEY: ${{ secrets.AZURE_FUNCTION_API_KEY }}
+
 npm install @azure/cosmos
 
 
