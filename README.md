@@ -30,6 +30,15 @@ This project showcases how to host a personal CV website on Azure, complete with
 
 ---
 
+### 2. File Sharing Website on Azure
+
+This guide demonstrates how to set up a file-sharing website using Azure App Services.
+
+- **Guide Link**: [Azure CV Project](https://github.com/your-username/your-repo-name/tree/main/Azure-CV) <!-- Replace with the actual path to your CV project -->
+
+---
+
+
 ## Getting Started
 
 To get started with any of the projects, simply follow the respective guide linked above. Ensure you have the prerequisites set up before diving into the implementation.
