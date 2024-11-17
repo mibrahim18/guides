@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://cdn-icons-png.flaticon.com/512/1148/1148040.png"
+    />
+    <!-- Cloud favicon -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <!-- Font Awesome for icons -->
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #4caf50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      h1 i {
+        margin-right: 10px; /* Space between icon and title */
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+      input[type="file"] {
+        margin-bottom: 10px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      #statusMessage {
+        margin-top: 15px;
+        font-weight: bold;
+        transition: opacity 0.5s;
+      }
+      .error {
+        color: red;
+      }
+      .success {
+        color: green;
+      }
+      pre {
+        background-color: #f4f4f4;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      #downloadLink {
+        margin-top: 10px;
+      }
+      #copyButton {
+        margin-top: 10px;
+        background-color: #008cba;
+      }
+      #copyButton:hover {
+        background-color: #007bb5;
+      }
+      /* Spinner styles */
+      #spinner {
+        display: none; /* Hidden by default */
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000; /* On top of other elements */
+      }
+      .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border: 0.3em solid #ccc; /* Light grey */
+        border-top: 0.3em solid #4caf50; /* Green */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>
+        <i class="fas fa-cloud-upload-alt"></i> File Upload
+        <!-- Second cloud upload icon -->
+      </h1>
+      <p>Share your files with ease! (Limit: 1GB)</p>
+      <small style="display: block; margin-top: 5px"
+        >Links will be available only for 24 hours.</small
+      >
+    </header>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="file" id="fileInput" required />
+      <button type="submit">Upload</button>
+    </form>
+
+    <h3 id="statusMessage"></h3>
+    <div id="errorDetails" class="error"></div>
+    <div id="downloadLink"></div>
+    <button id="copyButton" style="display: none">Copy Download Link</button>
+
+    <!-- Spinner element -->
+    <div id="spinner" class="spinner-border"></div>
+
+    <script>
+      const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024; // 1GB in bytes
+
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const formData = new FormData();
+          const fileInput = document.getElementById("fileInput");
+
+          if (!fileInput.files.length) {
+            document.getElementById("statusMessage").innerText =
+              "Please select a file.";
+            return;
+          }
+
+          const file = fileInput.files[0];
+
+          // Check if file size exceeds 1GB
+          if (file.size > MAX_FILE_SIZE) {
+            document.getElementById("statusMessage").innerText =
+              "File size exceeds the 1GB limit.";
+            document.getElementById("statusMessage").classList.add("error");
+            return;
+          }
+
+          formData.append("file", file);
+
+          // Show the spinner
+          const spinner = document.getElementById("spinner");
+          spinner.style.display = "block";
+
+          try {
+            const response = await fetch("website/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            const result = await response.json();
+
+            // Hide the spinner
+            spinner.style.display = "none";
+
+            if (!response.ok) {
+              throw new Error(result.message || "Unknown error occurred.");
+            }
+
+            document.getElementById("statusMessage").innerText =
+              "File uploaded successfully!";
+            document.getElementById("statusMessage").classList.add("success");
+            document.getElementById("errorDetails").innerText = "";
+
+            // Create and display the download link
+            const downloadLinkContainer =
+              document.getElementById("downloadLink");
+            downloadLinkContainer.innerHTML = ""; // Clear previous links
+            const downloadLink = document.createElement("a");
+            downloadLink.href = result.fileUrl; // Use the URL from the server response
+            downloadLink.innerText = "Download your file"; // Set link text
+            downloadLink.target = "_blank"; // Open link in a new tab
+            downloadLinkContainer.appendChild(downloadLink); // Add link to the container
+
+            // Show the copy button
+            const copyButton = document.getElementById("copyButton");
+            copyButton.style.display = "block"; // Show the button
+            copyButton.onclick = () => {
+              navigator.clipboard.writeText(result.fileUrl).then(() => {
+                document.getElementById("statusMessage").innerText =
+                  "Link copied to clipboard!";
+                document
+                  .getElementById("statusMessage")
+                  .classList.add("success");
+              });
+            };
+          } catch (error) {
+            // Hide the spinner
+            spinner.style.display = "none";
+
+            document.getElementById("statusMessage").innerText =
+              "Error uploading file:";
+            document.getElementById("statusMessage").classList.add("error");
+            document.getElementById("errorDetails").innerHTML = `<pre>${
+              error.message
+            }\n\n${error.stack || ""}</pre>`;
+          }
+        });
+    </script>
+  </body>
+</html>
