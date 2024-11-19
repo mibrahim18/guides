@@ -2,7 +2,7 @@
 
 Easily upload and share files securely using **Azure**! This project shows you how to build a file-sharing website with Azure Web Apps and secure environment variables for a seamless and scalable cloud experience.
 
-📺 [Watch the YouTube Setup Tutorial](https://youtu.be/your-video-link) 📺
+📺 [Watch the YouTube Setup Tutorial](https://youtu.be/XYMTxzLD6jY) 📺
 
 ---
 
